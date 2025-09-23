@@ -1,8 +1,9 @@
+
 /****************************************************
  * @file: BST.java
  * @description: Binary Search Tree class that has insertion, searching, removal, and traversal. Uses Noda.java
  * @author: Tim Hultman
- * @date: 9/14/25
+ * @date: 9/23/25
  ****************************************************/
 
 import java.util.Iterator;

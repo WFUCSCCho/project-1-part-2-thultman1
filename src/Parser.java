@@ -1,180 +1,187 @@
 /****************************************************
  * @file: Parser.java
- * @description: Loads all movies from movie_data.csv into a BST<Movie>,
- *               then processes input commands (search/remove/print) and
- *               writes results to result.txt. Quote-aware CSV parsing
- *               handles commas inside quoted fields (like description).
+ * @description: Loads all movies from movie_data.csv into a BST<Movie>, then processes input commands (search/remove/print) and writes results to result.txt. Quote-aware CSV parsing handles commas inside quoted fields (like description).
  * @author: Tim Hultman
- * @date: 9/22/25
+ * @date: 9/23/25
  ****************************************************/
 import java.io.*;
 import java.util.Scanner;
 
 public class Parser {
-    private BST<Movie> mybst = new BST<>();
+    //BST movie construction
+    private BST<Movie> BST = new BST<>();
 
-    /** Constructor: clears result.txt, loads dataset, processes commands */
+    /**
+     * Constructor, clears result.txt, loads dataset, processes commands
+     * Parameter String filename, name of input
+     */
     public Parser(String filename) throws FileNotFoundException {
         PrintWriter writer = new PrintWriter("./result.txt");
         writer.print("");
         writer.close();
 
-        loadCSV("./movie_data.csv");  // preload dataset into BST
-        process(new File(filename));  // run commands
+        loadCSV("./movie_data.csv");
+        process(new File(filename));
     }
 
-    /** Load all movies from CSV into BST */
-    private void loadCSV(String csvPath) {
-        try (BufferedReader br = new BufferedReader(new FileReader(csvPath))) {
-            String line;
-            boolean first = true;
-            while ((line = br.readLine()) != null) {
-                if (line.trim().isEmpty()) continue;
+    /**
+     * Load all movies from CSV into BST, skipping header row
+     * Parameter String csvPath, name of csv
+     * Return void
+     */
+    public void loadCSV(String CSV) {
+        try (Scanner scan = new Scanner(new File(CSV))) {
+            scan.nextLine(); // pass over header as it is just variables
 
-                if (first) { // skip header
-                    first = false;
-                    if (line.toLowerCase().startsWith("name,")) continue;
-                }
-
-                String[] parts = splitCSV(line, 8);
-                if (parts == null || parts.length != 8) continue;
-
-                Movie m = toMovie(parts);
-                mybst.insert(m);
+            while (scan.hasNextLine()) {
+                String[] parts = splitCSV(scan.nextLine(), 8);
+                BST.insert(toMovie(parts));
             }
-        } catch (IOException e) {
-            System.out.println("Error reading dataset: " + csvPath);
+        } catch (FileNotFoundException e) {
+            System.out.println("Bad dataset: " + CSV);
         }
     }
 
-    /** Process commands from input file */
-    public void process(File input) throws FileNotFoundException {
-        Scanner scan = new Scanner(input);
-        while (scan.hasNextLine()) {
-            String line = scan.nextLine().trim();
-            if (line.isEmpty()) continue;
-            String[] cmd = line.split(" +", 2);
-            operate_BST(cmd);
+
+    /**
+     * Process input file commands
+     * Parameter String input, name of input file
+     * Return void
+     */
+    public void process(File inputFile) throws FileNotFoundException {
+        try (Scanner scan = new Scanner(inputFile)) {
+            while (scan.hasNextLine()) {
+                String[] cmd = scan.nextLine().split(" +", 2);
+                operate_BST(cmd);
+            }
         }
-        scan.close();
     }
 
-    /** Execute BST operations */
+
+    /**
+     * Operates BST via cases
+     * Parameter String[] command, 1D array of commands
+     * Return void
+     */
     public void operate_BST(String[] command) {
-        if (command.length == 0) {
-            writeToFile("Invalid Command", "./result.txt");
-            return;
-        }
+        String cmd = command[0].toLowerCase();
+        switch (cmd) {
+            case "search":
+                Movie target = new Movie(command[1], 0, "", "", 0, "", "", "");
+                Node<Movie> found = BST.search(target);
+                if (found != null) {
+                    writeToFile("found " + found.getValue().toString(), "./result.txt");
+                }
+                else {
+                    writeToFile("search error", "./result.txt");
+                }
+                break;
 
-        switch (command[0].toLowerCase()) {
-            case "search" -> {
-                if (command.length < 2) {
-                    writeToFile("Invalid Command", "./result.txt");
-                } else {
-                    Movie target = new Movie(command[1].trim(), 0, "", "", 0, "", "", "");
-                    Node<Movie> found = mybst.search(target);
-                    if (found != null) {
-                        writeToFile("found " + found.getValue().toString(), "./result.txt");
-                    } else {
-                        writeToFile("search failed", "./result.txt");
-                    }
+            case "remove":
+                Movie film = new Movie(command[1], 0, "", "", 0, "", "", "");
+                Node<Movie> removed = BST.remove(film);
+                if (removed != null) {
+                    writeToFile("removed " + command[1], "./result.txt");
                 }
-            }
-            case "remove" -> {
-                if (command.length < 2) {
-                    writeToFile("Invalid Command", "./result.txt");
-                } else {
-                    Movie target = new Movie(command[1].trim(), 0, "", "", 0, "", "", "");
-                    Node<Movie> removed = mybst.remove(target);
-                    if (removed != null) {
-                        writeToFile("removed " + command[1], "./result.txt");
-                    } else {
-                        writeToFile("remove failed", "./result.txt");
-                    }
+                else {
+                    writeToFile("remove error", "./result.txt");
                 }
-            }
-            case "print" -> {
-                StringBuilder build = new StringBuilder();
-                for (Movie m : mybst) {
-                    build.append(m.toString()).append("\n");
+                break;
+
+            case "print":
+                StringBuilder strB = new StringBuilder();
+                for (Movie m : BST) {
+                    strB.append(m.toString()).append("\n");
                 }
-                writeToFile(build.toString().trim(), "./result.txt");
-            }
-            default -> writeToFile("Invalid Command", "./result.txt");
+                writeToFile(strB.toString().trim(), "./result.txt");
+                break;
         }
     }
 
-    /** Convert array of fields into a Movie */
+
+    /**
+     * Convert array of fields into a Movie
+     * Parameter String[] f, 1D array of film
+     * Return Movie, film with filled values
+     */
     private Movie toMovie(String[] f) {
         String name = unquote(f[0]);
-        int year = safeInt(unquote(f[1]));
+        int year = Integer.parseInt(unquote(f[1]));
         String duration = unquote(f[2]);
         String genre = unquote(f[3]);
-        double rating = safeDouble(unquote(f[4]));
+        double rating = Double.parseDouble(unquote(f[4]));
         String description = unquote(f[5]);
         String director = unquote(f[6]);
         String stars = unquote(f[7]);
         return new Movie(name, year, duration, genre, rating, description, director, stars);
     }
 
-    /** Quote-aware CSV splitting */
-    private String[] splitCSV(String line, int expected) {
+    /**
+     * Splits CSV with every 8 commas being a new movie, quote aware
+     * Parameter String ln an int expected, the line scan and expected int value
+     * Return String[], array
+     */
+    private String[] splitCSV(String ln, int expected) {
         String[] out = new String[expected];
-        StringBuilder cur = new StringBuilder();
+        StringBuilder strB = new StringBuilder();
         boolean inQuotes = false;
-        int idx = 0;
+        int index = 0;
 
-        for (int i = 0; i < line.length(); i++) {
-            char c = line.charAt(i);
+        for (int i = 0; i < ln.length(); i++) {
+            char c = ln.charAt(i);
             if (inQuotes) {
                 if (c == '"') {
-                    if (i + 1 < line.length() && line.charAt(i + 1) == '"') {
-                        cur.append('"');
+                    if (i + 1 < ln.length() && ln.charAt(i + 1) == '"') {
+                        strB.append('"');
                         i++;
-                    } else {
+                    }
+                    else {
                         inQuotes = false;
                     }
-                } else {
-                    cur.append(c);
+                }
+                else {
+                    strB.append(c);
                 }
             } else {
                 if (c == '"') {
                     inQuotes = true;
-                } else if (c == ',') {
-                    if (idx >= expected) return null;
-                    out[idx++] = cur.toString();
-                    cur.setLength(0);
-                } else {
-                    cur.append(c);
+                }
+                else if (c == ',') {
+                    out[index++] = strB.toString();
+                    strB.setLength(0);
+                }
+                else {
+                    strB.append(c);
                 }
             }
         }
-        if (idx < expected) out[idx++] = cur.toString();
-        return (idx == expected) ? out : null;
+        out[index] = strB.toString();
+        return out;
     }
 
-    private String unquote(String s) {
-        if (s == null) return "";
-        String t = s.trim();
-        if (t.length() >= 2 && t.startsWith("\"") && t.endsWith("\"")) {
-            t = t.substring(1, t.length() - 1);
+    /**
+     * Unqoutes a string
+     * Parameter String str, input string w/ ""
+     * Return String, out string w/o ""
+     */
+    private String unquote(String str) {
+        if (str.startsWith("\"") && str.endsWith("\"")) {
+            return str.substring(1, str.length() - 1);
         }
-        return t.trim();
+        return str;
     }
 
-    private int safeInt(String s) {
-        try { return Integer.parseInt(s.trim()); } catch (Exception e) { return 0; }
-    }
 
-    private double safeDouble(String s) {
-        try { return Double.parseDouble(s.trim()); } catch (Exception e) { return 0.0; }
-    }
-
-    /** Append one line to result.txt */
+    /**
+     * Writes one line to result.txt until done
+     * Parameter String content and filePath, content to write and the result.txt
+     * Return void
+     */
     public void writeToFile(String content, String filePath) {
         try (FileWriter writer = new FileWriter(filePath, true)) {
             writer.write(content + "\n");
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             System.out.println("Error writing to file: " + filePath);
         }
     }
