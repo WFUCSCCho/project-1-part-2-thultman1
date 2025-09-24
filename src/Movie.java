@@ -2,7 +2,7 @@
  * @file: Movie.java
  * @description: Represents a Movie record parsed from CSV. Comparable by alphabetical name so Movies can be stored in a BST keyed by name.
  * @author: Tim Hultman
- * @date: 9/23/25
+ * @date: 9/24/25
  ****************************************************/
 public class Movie implements Comparable<Movie> {
     private String name;
@@ -26,22 +26,25 @@ public class Movie implements Comparable<Movie> {
      * Parameter String name, int year, String duration, String genre, double rating, String description, String director, String stars
      * Return void
      */
-    public Movie(String name, int year, String duration, String genre, double rating, String description, String director, String stars) {
-        this.name = name;
+    public Movie(String movie, int year, String length, String genre, double score, String description, String director, String actors) {
+        this.name = movie;
         this.year = year;
-        this.duration = duration;
+        this.duration = length;
         this.genre = genre;
-        this.rating = rating;
+        this.rating = score;
         this.description = description;
         this.director = director;
-        this.stars = stars;
+        this.stars = actors;
     }
 
-    /**
-     * Getters for all fields
-     * Parameter none
-     * Return String name, int year, String duration, String genre, double rating, String description, String director, String stars
-     */
+    // copy constructor
+    public Movie(Movie o) {
+        this(o.name, o.year, o.duration, o.genre, o.rating, o.description, o.director, o.stars);
+    }
+
+
+    // Getters for all fields
+    // Return String name, int year, String duration, String genre, double rating, String description, String director, String stars
     public String getName() {
         return name; }
     public int getYear() {
@@ -59,11 +62,9 @@ public class Movie implements Comparable<Movie> {
     public String getStars() {
         return stars; }
 
-    /**
-     * Setters for all fields
-     * Parameter String name, int year, String duration, String genre, double rating, String description, String director, String stars
-     * Return void
-     */
+
+    // Setters for all fields
+    // Parameter String name, int year, String duration, String genre, double rating, String description, String director, String stars
     public void setName(String name) {
         this.name = name; }
     public void setYear(int year) {
@@ -93,20 +94,17 @@ public class Movie implements Comparable<Movie> {
     }
 
     /**
-     * equals Compare by movie name (case-insensitive)
+     * equals Compare by movie name, not case sensititve
      * Parameter Object obj
      * Return boolean
      */
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this ==obj) {
             return true;
         }
-        if (!(obj instanceof Movie)) {
-            return false;
-        }
         Movie other = (Movie) obj;
-        return this.name != null && this.name.equalsIgnoreCase(other.name);
+        return this.name.equalsIgnoreCase(other.name);
     }
 
     /**
@@ -116,15 +114,6 @@ public class Movie implements Comparable<Movie> {
      */
     @Override
     public int compareTo(Movie other) {
-        if (this.name == null && other.name == null) {
-            return 0;
-        }
-        if (this.name ==null) {
-            return -1;
-        }
-        if (other.name == null) {
-            return 1;
-        }
         return this.name.compareToIgnoreCase(other.name);
     }
 }
