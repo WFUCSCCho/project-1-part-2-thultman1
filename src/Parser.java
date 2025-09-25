@@ -1,6 +1,6 @@
 /****************************************************
  * @file: Parser.java
- * @description: Loads all movies from movie_data.csv into a BST, then processes input commands (search/remove/print/insert) and writes results to result.txt. Quote-aware CSV parsing handles commas inside quoted fields (like description).
+ * @description: Loads all movies from movie_data.csv into a BST, then processes input commands (search/remove/print/insert) and writes results to output.txt. Quote-aware CSV parsing handles commas inside quoted fields (like description).
  * @author: Tim Hultman
  * @date: 9/24/25
  ****************************************************/
@@ -12,9 +12,9 @@ public class Parser {
     private BST<Movie> BST = new BST<>();
 
 
-     // Constructor, clears result.txt, loads dataset, processes commands
+     // Constructor, clears output.txt, loads dataset, processes commands
     public Parser(String filename) throws FileNotFoundException {
-        PrintWriter write = new PrintWriter("./result.txt");
+        PrintWriter write = new PrintWriter("./output.txt");
         write.print("");
         write.close();
 
@@ -59,27 +59,27 @@ public class Parser {
                             +"\n....Score: " + mv.getRating()
                             +"\n....Description: " + mv.getDescription()
                             +"\n....Director: " + mv.getDirector()
-                            +"\n....Actors: " + mv.getStars(), "./result.txt");
+                            +"\n....Actors: " + mv.getStars(), "./output.txt");
                 }
                 else {
-                    writeToFile("search failed", "./result.txt");
+                    writeToFile("search failed", "./output.txt");
                 }
                 break;
 
             case "remove":
                 Movie film = new Movie(command[1], 0, "", "", 0, "", "", "");
                 Node<Movie> removed = BST.remove(film);
-                writeToFile(removed != null ? "removed " + command[1] : "remove failed", "./result.txt");
+                writeToFile(removed != null ? "removed " + command[1] : "remove failed", "./output.txt");
                 break;
 
             case "insert":
                 Movie mov = convert(splitCSV(command[1], 8));
                 if (BST.search(mov)== null) {
                     BST.insert(mov);
-                    writeToFile("inserted " + mov.getName(), "./result.txt");
+                    writeToFile("inserted " + mov.getName(), "./output.txt");
                 }
                 else {
-                    writeToFile("duplicate " + mov.getName(), "./result.txt");
+                    writeToFile("duplicate " + mov.getName(), "./output.txt");
                 }
                 break;
             case "print":
@@ -89,10 +89,10 @@ public class Parser {
                 for (Movie m : BST) {
                     build.append(count++).append(") ").append(m.toString()).append("\n");
                 }
-                writeToFile(build.toString().trim(), "./result.txt");
+                writeToFile(build.toString().trim(), "./output.txt");
                 break;
             default:
-                writeToFile("Invalid command", "./result.txt");
+                writeToFile("Invalid command", "./output.txt");
                 break;
         }
 
@@ -133,7 +133,7 @@ public class Parser {
     }
 
 
-     // Writes one line to result.txt until done
+     // Writes one line to output.txt until done
     public void writeToFile(String content, String filePath) {
         try (FileWriter writer = new FileWriter(filePath, true)) {
             writer.write(content + "\n");
